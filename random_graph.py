@@ -46,20 +46,32 @@ def poisson_pdf(k, l):
 # %%
 # set parameters
 N = 1000
-p = 0.01
+p = 0.005
 
 # generate the graph
 G = ER_graph(N, p)
 
 # get the degree distribution
 deg = nx.degree_histogram(G)
+deg_probs = deg / np.sum(deg)
 
 # get the theoretical distribution
 deg_range = np.arange(0, len(deg) + 1)
 ppdf = [poisson_pdf(k, N*p) for k in deg_range]
 
-plt.bar(deg_range[:-1], deg, label='Obs.')
+plt.bar(deg_range[:-1], deg_probs, label='Obs.')
 plt.plot(deg_range, ppdf, label='Theo.', c='C1')
 plt.legend()
 plt.show()
+# %% [markdown]
+# Degree values for graphs with $N \approx 1000$ or bigger look like they are
+# poisson distributed. So thats good, I think our implementation works. 
+
+## Adding dormancy
+# What we're really here to do is add dormancy to these models. We'll start
+# with an ecology inspired model where we'll think of nodes as species and edges
+# as some kind of interaction between species. Let $d_i$ be the fraction of
+# species $i$ that is in the dormant state. We will start by considering
+# dormancy as a process that strictly reduces the probability of interaction
+# between two species.
 # %%
