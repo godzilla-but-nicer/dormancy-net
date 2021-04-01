@@ -99,32 +99,67 @@ def BA_dormancy(N, m, alpha):
     G = nx.DiGraph()
     
     # start with the initial m nodes and add the next node
-    G.add_nodes_from(range(m), dormant=False)
+    G.add_nodes_from(range(N), dormant=False)
     init_edges = [(i, m+1) for i in range(m)]
     G.add_edges_from(init_edges)
     # need dormancy vector for downstream operations
     ddict = nx.get_node_attributes(G, 'dormant')
-    dormant = np.array([ddict[i] for i in len(ddict)])
-
+    dormant = np.array([ddict[i] for i in range(len(ddict))])
+    print(np.where(dormant == False)[0])
     # now add the rest
     for i in range(m + 2, N):
-        # connect randomly if node is not dormant, 
-        targets = rng.choice(np.where(dormant == False), size=m, replace=False)
+        # connect randomly if node is not dormant,
+        targets = rng.choice(np.where(dormant == False)[0], size=m, replace=False)
         new_edges = [(i, t) for t in targets]
+        G.add_edges_from(new_edges)
     
-        # wake up one dormant node
-        wake_up = rng.choice(np.where(dormant), size=qfn - 1, replace=False)
+        # wake up one dormant node if any are dormant(not on first iteration)
+        if np.sum(dormant) > 0:
+            wake_up = rng.choice(np.where(dormant)[0], size=qfn - 1, replace=False)
+            dormant[wake_up] = False
+            nx.set_node_attributes(G, dormant, 'dormant')
 
         # make dormant two nodes according to probability above
+        indeg = np.array([d[1] for node, d in enumerate(G.in_degree()) if node < i - 1])
+        gamma1 = np.sum(1 / (alpha + indeg))**-1
+        nu = gamma1 / (alpha + indeg)
 
-
-        indeg = np.array([d[1] for d in G.in_degree()])
-        pa_probs = indeg / np.sum(indeg)
-        G.add_edges_from(new_edges)
+        to_sleep = rng.choice(range(i - 1), p=nu, size=qfn, replace=False)
+        dormant[to_sleep] = True
+        nx.set_node_attributes(G, dormant, 'dormant')
 
     return G
-G = BA_dormancy(50, 5, 10)
+G = BA_dormancy(50, 5, 7)
 nx.draw_spring(G)
 # %%
+
+# %%
+m = 20
+G = BA_dormancy(1000, m, m+2)
+degrees = [d[1] for d in G.degree()]
+sorted_degree = sorted(degrees)
+
+# calculate bins
+n_bins = max(10, round(np.unique(sorted_degree).shape[0]/2))
+bins = np.logspace(np.log10(sorted_degree[0]), np.log10(
+    sorted_degree[-1]), n_bins, base=10)
+counts, bin_edges = np.histogram(sorted_degree, bins, density=True)
+norm_counts = np.array(counts) / np.diff(np.array(bin_edges))
+
+# count CCDF
+ccdf = np.cumsum(norm_counts[::-1])
+rev_bins = bin_edges[::-1]
+
+# get the theoretical power-law line as given in the paper
+deg_lims = np.unique(sorted_degree)
+pl_theo = 2 * m / deg_lims**(4)
+
+plt.plot(rev_bins[1:], ccdf, label='Obs.')
+plt.plot(deg_lims, pl_theo, linestyle='--', c='C1', label='Theo.')
+plt.xlabel('k')
+plt.ylabel('P(k)')
+plt.xscale('log')
+plt.yscale('log')
+plt.show()
 
 # %%
