@@ -104,16 +104,16 @@ def BA_dormancy(N, m, alpha):
     G.add_edges_from(init_edges)
     # need dormancy vector for downstream operations
     ddict = nx.get_node_attributes(G, 'dormant')
-    dormancy = np.array([ddict[i] for i in len(ddict)])
+    dormant = np.array([ddict[i] for i in len(ddict)])
 
     # now add the rest
     for i in range(m + 2, N):
         # connect randomly if node is not dormant, 
-        targets = rng.choice(where(dormant == False), size=m, replace=False)
+        targets = rng.choice(np.where(dormant == False), size=m, replace=False)
         new_edges = [(i, t) for t in targets]
     
         # wake up one dormant node
-        wake_up = rng.choice(where(dormant), size=qfn - 1, replace=False)
+        wake_up = rng.choice(np.where(dormant), size=qfn - 1, replace=False)
 
         # make dormant two nodes according to probability above
 
