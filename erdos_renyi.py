@@ -122,10 +122,10 @@ def ER_dormancy(N, p, d, r, f):
 
 G = ER_dormancy(1000, 0.005, 0, 0, 0)
 nx.draw(G)
-# %%
+# %% [markdown]
 # set parameters
-N = 10000
-p = 0.005
+N = 3000
+p = 0.01
 d = 0.05
 r = 0.02
 f = 0.7
@@ -152,7 +152,7 @@ dpdf = [dormant_pdf(x, N, p, d, r, f) for x in deg_range]
 
 
 plt.bar(deg_range[:-1], deg_probs, label='Obs.', alpha=0.4)
-plt.plot(deg_range, ppdf, label='Poisson', c='C1')
+# plt.plot(deg_range, ppdf, label='Poisson', c='C1')
 plt.plot(deg_range, dpdf, label='Theo.', c='C2', linestyle='--')
 plt.xlabel('k')
 plt.ylabel('P(k)')
